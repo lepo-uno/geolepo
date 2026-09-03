@@ -1,0 +1,31 @@
+KUGI Standardizer
+Plugin QGIS untuk standardisasi atribut data spasial sesuai KUGI.
+
+Copyright (C) 2026  z
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+================================================================================
+CATATAN
+
+Berkas ini baru memuat pemberitahuan lisensi. Sebelum publikasi ke
+repositori resmi plugin QGIS, tempelkan teks lengkap GNU General Public
+License versi 3 di bawah garis ini. Teksnya bisa diunduh dari:
+
+    https://www.gnu.org/licenses/gpl-3.0.txt
+
+Repositori QGIS mensyaratkan plugin berlisensi GPL v2 atau lebih baru,
+dan berkas LICENSE yang lengkap adalah bagian dari syarat tersebut.
+================================================================================
