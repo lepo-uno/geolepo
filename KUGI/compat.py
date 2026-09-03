@@ -8,9 +8,10 @@ Target minimum: QGIS 3.28 LTR, Python 3.9.
 """
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import (QAbstractItemView, QComboBox,
+from qgis.PyQt.QtWidgets import (QAbstractItemView, QComboBox, QFrame,
                                  QHeaderView, QMessageBox)
-from qgis.core import Qgis, QgsMessageLog
+from qgis.core import (Qgis, QgsBlockingNetworkRequest, QgsMapLayer,
+                       QgsMessageLog, QgsVectorFileWriter, QgsWkbTypes)
 
 # QGIS 4 membuang QVariant untuk tipe field dan memakai QMetaType. QGIS 3.38
 # sudah menerima keduanya, di bawah itu hanya QVariant. Resolusinya dilakukan
@@ -42,12 +43,14 @@ PLUGIN_NAME = "KUGI"
 QGIS_VERSION = Qgis.QGIS_VERSION_INT
 
 
-def log(message, level=Qgis.Info):
+def log(message, level=None):
+    if level is None:
+        level = MSG_INFO
     QgsMessageLog.logMessage(str(message), PLUGIN_NAME, level)
 
 
 def log_warning(message):
-    log(message, Qgis.Warning)
+    log(message, MSG_WARNING)
 
 
 # Nilai faValueType yang muncul di API KUGI, dipetakan ke tipe field QGIS.
@@ -192,10 +195,33 @@ def vector_layer_filter():
     if layer_filter is not None and hasattr(layer_filter, "VectorLayer"):
         return layer_filter.VectorLayer
     from qgis.core import QgsMapLayerProxyModel
-    return QgsMapLayerProxyModel.VectorLayer
+    return enum_of(QgsMapLayerProxyModel, "Filter", "VectorLayer")
 
 
 def show_modal(dialog):
     """Jalankan dialog secara modal. PyQt6 membuang exec_()."""
     runner = getattr(dialog, "exec", None) or getattr(dialog, "exec_")
     return runner()
+
+# Enum milik kelas QGIS, bukan Qt. Di Qt6 semuanya ikut bercakupan.
+# Dinamai MSG_* dan bukan LEVEL_*, karena validator.py sudah memakai
+# LEVEL_ERROR dan kawan-kawan untuk tingkat temuannya sendiri.
+MSG_INFO = enum_of(Qgis, "MessageLevel", "Info")
+MSG_WARNING = enum_of(Qgis, "MessageLevel", "Warning")
+MSG_CRITICAL = enum_of(Qgis, "MessageLevel", "Critical")
+
+GEOM_POINT = enum_of(QgsWkbTypes, "GeometryType", "PointGeometry")
+GEOM_LINE = enum_of(QgsWkbTypes, "GeometryType", "LineGeometry")
+GEOM_POLYGON = enum_of(QgsWkbTypes, "GeometryType", "PolygonGeometry")
+
+STYLE_FIELDS = enum_of(QgsMapLayer, "StyleCategory", "Fields")
+STYLE_FORMS = enum_of(QgsMapLayer, "StyleCategory", "Forms")
+STYLE_SYMBOLOGY = enum_of(QgsMapLayer, "StyleCategory", "Symbology")
+
+WRITER_OVERWRITE = enum_of(QgsVectorFileWriter, "ActionOnExistingFile",
+                           "CreateOrOverwriteFile")
+WRITER_NO_ERROR = enum_of(QgsVectorFileWriter, "WriterError", "NoError")
+
+NETWORK_NO_ERROR = enum_of(QgsBlockingNetworkRequest, "ErrorCode", "NoError")
+
+FRAME_NO_FRAME = enum_of(QFrame, "Shape", "NoFrame")

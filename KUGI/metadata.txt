@@ -2,9 +2,9 @@
 name=KUGI
 qgisMinimumVersion=3.28
 qgisMaximumVersion=4.99
-description=Plugin untuk standardisasi data geospasial sesuai katalog unsur Geografi Indonesia (KUGI). 
+description=Plugin untuk standardisari data geospasial sesuai katalog unsur Geografi Indonesia (KUGI). 
 about=Fitur plugin: Plugin mengambil skema unsur langsung dari WebAPI KUGI (Badan Informasi Geospasial). Pengaturan kolom/atribut tabel sesuai standar KUGI. Ekspor menjadi data spasial baru dalam format Shapefile dan/atau GeoPackage.
-version=1.0.0
+version=1.0.1
 author=Seto Baruno, Azkal Azkiya, Farda Fadila, Nando Yudanto Aji
 email=
 

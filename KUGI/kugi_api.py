@@ -15,7 +15,7 @@ from qgis.PyQt.QtCore import QUrl, QByteArray
 from qgis.PyQt.QtNetwork import QNetworkRequest
 from qgis.core import (QgsApplication, QgsSettings, QgsBlockingNetworkRequest)
 
-from .compat import log, log_warning
+from .compat import NETWORK_NO_ERROR, log, log_warning
 from .kugi_model import (KugiCategory, KugiFeatureTypeRef,
                          KugiFeatureType, strip_en)
 
@@ -150,7 +150,7 @@ def _fetch_json(url: str, attempts: int = 2):
             pass
 
         code = blocking.get(request, forceRefresh=True)
-        if code == QgsBlockingNetworkRequest.NoError:
+        if code == NETWORK_NO_ERROR:
             body = bytes(blocking.reply().content())
             try:
                 return json.loads(body.decode("utf-8"))

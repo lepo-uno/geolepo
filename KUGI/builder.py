@@ -16,10 +16,13 @@ from qgis.core import (QgsFeature, QgsField, QgsFields, QgsGeometry,
                        QgsVectorLayer, QgsVectorFileWriter, QgsWkbTypes,
                        QgsEditorWidgetSetup, QgsMapLayer)
 
-from .compat import (TYPE_BOOL, TYPE_DATE, TYPE_DATETIME,
-                     TYPE_DOUBLE, TYPE_INT, TYPE_LONGLONG, TYPE_STRING,
-                     DATE_ISO, DBF_MAX_FIELD_NAME, DBF_MAX_STRING, log, log_warning,
-                     length_precision_for, qvariant_for)
+from .compat import (DATE_ISO, DBF_MAX_FIELD_NAME, DBF_MAX_STRING,
+                     GEOM_LINE, GEOM_POINT, GEOM_POLYGON,
+                     STYLE_FIELDS, STYLE_FORMS, STYLE_SYMBOLOGY,
+                     TYPE_BOOL, TYPE_DATE, TYPE_DATETIME, TYPE_DOUBLE,
+                     TYPE_INT, TYPE_LONGLONG, TYPE_STRING,
+                     WRITER_NO_ERROR, WRITER_OVERWRITE,
+                     length_precision_for, log, log_warning, qvariant_for)
 from .mapping import MODE_CONSTANT, MODE_CRS, MODE_SEQUENCE, MODE_SOURCE
 
 OVERRIDES_PATH = os.path.join(os.path.dirname(__file__), "resources",
@@ -311,9 +314,9 @@ def _memory_uri_candidates(source_layer):
         pass
     candidates.append(QgsWkbTypes.displayString(wkb))
     fallback = {
-        QgsWkbTypes.PointGeometry: "MultiPoint",
-        QgsWkbTypes.LineGeometry: "MultiLineString",
-        QgsWkbTypes.PolygonGeometry: "MultiPolygon",
+        GEOM_POINT: "MultiPoint",
+        GEOM_LINE: "MultiLineString",
+        GEOM_POLYGON: "MultiPolygon",
     }
     candidates.append(fallback.get(source_layer.geometryType(), "MultiPoint"))
 
@@ -542,8 +545,8 @@ def _save_style(layer, target_path) -> Optional[str]:
     """Tulis .qml dengan basename yang sama seperti berkas data."""
     qml_path = os.path.splitext(target_path)[0] + ".qml"
     try:
-        categories = (QgsMapLayer.Fields | QgsMapLayer.Forms
-                      | QgsMapLayer.Symbology)
+        categories = (STYLE_FIELDS | STYLE_FORMS
+                      | STYLE_SYMBOLOGY)
         layer.saveNamedStyle(qml_path, categories)
     except TypeError:
         layer.saveNamedStyle(qml_path)
@@ -582,7 +585,7 @@ def write_outputs(layer, folder, basename, formats, write_qml=True) -> BuildResu
         else:
             options.layerName = basename
             options.actionOnExistingFile = (
-                QgsVectorFileWriter.CreateOrOverwriteFile)
+                WRITER_OVERWRITE)
 
         try:
             written = QgsVectorFileWriter.writeAsVectorFormatV3(
@@ -593,7 +596,7 @@ def write_outputs(layer, folder, basename, formats, write_qml=True) -> BuildResu
 
         error = written[0]
         message = written[1] if len(written) > 1 else ""
-        if error != QgsVectorFileWriter.NoError:
+        if error != WRITER_NO_ERROR:
             result.messages.append("Gagal menulis %s: %s" % (path, message))
             continue
 
