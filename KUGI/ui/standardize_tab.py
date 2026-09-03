@@ -12,10 +12,13 @@ from qgis.PyQt.QtWidgets import (QAbstractItemView, QApplication, QCheckBox,
                                  QMessageBox, QProgressBar, QPushButton,
                                  QTreeWidget,
                                  QTreeWidgetItem, QVBoxLayout, QWidget)
-from qgis.core import (QgsMapLayerProxyModel, QgsProject, QgsVectorLayer,
-                       QgsWkbTypes)
+from qgis.core import QgsProject, QgsVectorLayer, QgsWkbTypes
 from qgis.gui import QgsMapLayerComboBox
 
+from ..compat import (BUTTON_NO, BUTTON_YES, CURSOR_WAIT, ITEM_NO_FLAGS,
+                      ROLE_ACCEPT, ROLE_ACTION, ROLE_REJECT, ROLE_USER,
+                      SCROLLBAR_OFF, SELECT_SINGLE, show_modal,
+                      vector_layer_filter)
 from .. import kugi_api
 from ..builder import build_memory_layer, write_outputs
 from ..kugi_model import (GEOMETRY_LABEL, QGIS_GEOMETRY_TO_TOKEN, SCALE_MAP)
@@ -78,7 +81,7 @@ class StandardizeTab(QWidget):
         source_box = QGroupBox("1  Data masukan")
         source_form = QFormLayout(source_box)
         self.layer_combo = QgsMapLayerComboBox()
-        self.layer_combo.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.layer_combo.setFilters(vector_layer_filter())
         self.layer_combo.layerChanged.connect(self._on_layer_changed)
         source_form.addRow("Layer", self.layer_combo)
         self.layer_info = QLabel("-")
@@ -168,7 +171,7 @@ class StandardizeTab(QWidget):
         self.result_list.setHeaderHidden(True)
         self.result_list.setRootIsDecorated(False)
         self.result_list.setAlternatingRowColors(True)
-        self.result_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.result_list.setSelectionMode(SELECT_SINGLE)
         self.result_list.setWordWrap(True)
         self.result_list.setColumnWidth(0, RESULT_NAME_WIDTH)
         self.result_list.header().setStretchLastSection(True)
@@ -267,8 +270,8 @@ class StandardizeTab(QWidget):
         self.result_tree.setRootIsDecorated(False)
         self.result_tree.setUniformRowHeights(True)
         self.result_tree.setAlternatingRowColors(True)
-        self.result_tree.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.result_tree.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.result_tree.setSelectionMode(SELECT_SINGLE)
+        self.result_tree.setVerticalScrollBarPolicy(SCROLLBAR_OFF)
         self.result_tree.itemDoubleClicked.connect(self._on_result_activated)
         result_layout.addWidget(self.result_tree)
 
@@ -321,10 +324,10 @@ class StandardizeTab(QWidget):
         box.setInformativeText(
             "Sekali unduh. Setelah tersimpan, pencarian berjalan tanpa "
             "internet.")
-        download = box.addButton("Unduh sekarang", QMessageBox.AcceptRole)
-        settings = box.addButton("Buka pengaturan", QMessageBox.ActionRole)
-        box.addButton("Nanti", QMessageBox.RejectRole)
-        box.exec_()
+        download = box.addButton("Unduh sekarang", ROLE_ACCEPT)
+        settings = box.addButton("Buka pengaturan", ROLE_ACTION)
+        box.addButton("Nanti", ROLE_REJECT)
+        show_modal(box)
 
         if box.clickedButton() is download:
             if self.download_index():
@@ -352,8 +355,8 @@ class StandardizeTab(QWidget):
             "Katalog KUGI belum tersimpan. Unduh sekarang?\n\n"
             "Sekali unduh. Setelah tersimpan, pencarian berjalan tanpa "
             "internet.",
-            QMessageBox.Yes | QMessageBox.No)
-        if answer != QMessageBox.Yes:
+            BUTTON_YES | BUTTON_NO)
+        if answer != BUTTON_YES:
             self.schema_info.setText(
                 "Katalog belum diunduh. Buka tab Pengaturan untuk mengunduh.")
             return False
@@ -362,7 +365,7 @@ class StandardizeTab(QWidget):
     def download_index(self):
         """Unduh ulang indeks katalog dengan progres."""
         self._begin_progress(15)
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(CURSOR_WAIT)
         try:
             def report(position, total, name):
                 self.progress.setRange(0, max(1, total))
@@ -464,14 +467,14 @@ class StandardizeTab(QWidget):
             if rank == ref.MATCH_DEFINITION and not marked and needle:
                 header = QTreeWidgetItem(self.result_list)
                 header.setText(0, "Sesuai deskripsi")
-                header.setFlags(Qt.NoItemFlags)
+                header.setFlags(ITEM_NO_FLAGS)
                 header.setForeground(0, QBrush(QColor(130, 130, 130)))
                 marked = True
 
             item = QTreeWidgetItem(self.result_list)
             item.setText(0, self._describe(ref))
             item.setText(1, self._short_definition(ref.definition))
-            item.setData(0, Qt.UserRole, ref.code)
+            item.setData(0, ROLE_USER, ref.code)
             item.setToolTip(1, ref.definition or ref.type_name)
             shown += 1
 
@@ -521,7 +524,7 @@ class StandardizeTab(QWidget):
         item = self.result_list.currentItem()
         if item is None:
             return None
-        return item.data(0, Qt.UserRole)
+        return item.data(0, ROLE_USER)
 
     def _on_load_schema(self, *args):
         # Argumen diserap: slot ini tersambung ke sinyal yang
@@ -532,7 +535,7 @@ class StandardizeTab(QWidget):
             QMessageBox.information(
                 self, "KUGI", "Pilih unsur dari daftar lebih dulu.")
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(CURSOR_WAIT)
         try:
             self.schema = kugi_api.fetch_schema(code)
         except kugi_api.KugiApiError as exc:
@@ -671,7 +674,7 @@ class StandardizeTab(QWidget):
         total = layer.featureCount()
         self.process_button.setEnabled(False)
         self._begin_progress(total)
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(CURSOR_WAIT)
         try:
             self._step("Menyusun struktur atribut", 0)
             built = build_memory_layer(self.state, layer,
@@ -722,8 +725,8 @@ class StandardizeTab(QWidget):
                 "Pencarian, pengaturan kolom, dan pengaturan hasil akan "
                 "dikosongkan. Layer hasil di peta dan berkas yang sudah "
                 "tersimpan tidak terhapus.",
-                QMessageBox.Yes | QMessageBox.No)
-            if answer != QMessageBox.Yes:
+                BUTTON_YES | BUTTON_NO)
+            if answer != BUTTON_YES:
                 return
 
         self.schema = None
@@ -837,7 +840,7 @@ class StandardizeTab(QWidget):
             item.setText(2, issue.message)
             ids = getattr(issue, "feature_ids", [])
             item.setText(3, str(len(ids)) if ids else "")
-            item.setData(0, Qt.UserRole, ids)
+            item.setData(0, ROLE_USER, ids)
             if issue.level == LEVEL_ERROR:
                 item.setForeground(0, QBrush(QColor(190, 60, 60)))
             elif issue.level == LEVEL_WARNING:
@@ -887,7 +890,7 @@ class StandardizeTab(QWidget):
         item = self.result_tree.currentItem()
         if item is None:
             return
-        ids = item.data(0, Qt.UserRole) or []
+        ids = item.data(0, ROLE_USER) or []
         if not ids:
             return
         layer = None

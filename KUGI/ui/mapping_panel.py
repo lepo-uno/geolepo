@@ -12,14 +12,16 @@ kolom tambahan, sehingga aturan satu kolom satu tujuan terlihat langsung.
 """
 
 from qgis.PyQt.QtCore import Qt, pyqtSignal
-from qgis.PyQt.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox,
-                                 QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-                                 QPushButton, QTableWidget, QTableWidgetItem,
-                                 QVBoxLayout, QWidget)
+from qgis.PyQt.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, 
+                                 QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+                                 QTableWidget, QTableWidgetItem, QVBoxLayout, 
+                                 QWidget)
 
-from ..compat import qvariant_for, type_display_name
-from ..mapping import (AUTO_FIELDS, MODE_CONSTANT, MODE_CRS, MODE_EMPTY,
-                       MODE_SEQUENCE, MODE_SOURCE)
+from ..compat import (ITEM_EDITABLE, NO_EDIT_TRIGGERS, RESIZE_STRETCH,
+                      RESIZE_TO_CONTENTS, ROLE_USER, SCROLLBAR_OFF,
+                      SELECT_NONE, qvariant_for, type_display_name)
+from ..mapping import (AUTO_FIELDS, MODE_CONSTANT, MODE_CRS, MODE_SEQUENCE, 
+                       MODE_SOURCE)
 
 COL_FIELD = 0
 COL_TYPE = 1
@@ -62,19 +64,19 @@ class MappingPanel(QWidget):
         self.table.setHorizontalHeaderLabels(
             ["Field KUGI", "Tipe", "Kolom sumber", "Terisi", "Catatan"])
         self.table.verticalHeader().setVisible(False)
-        self.table.setSelectionMode(QAbstractItemView.NoSelection)
-        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setSelectionMode(SELECT_NONE)
+        self.table.setEditTriggers(NO_EDIT_TRIGGERS)
         self.table.setAlternatingRowColors(True)
         # Scrollbar internal dimatikan: tabel tumbuh mengikuti isinya dan
         # yang bergulir hanya jendela luar, supaya tidak ada gulir bersarang.
-        self.table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.table.setVerticalScrollBarPolicy(SCROLLBAR_OFF)
+        self.table.setHorizontalScrollBarPolicy(SCROLLBAR_OFF)
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(COL_FIELD, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(COL_TYPE, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(COL_SOURCE, QHeaderView.Stretch)
-        header.setSectionResizeMode(COL_FILLED, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(COL_NOTE, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(COL_FIELD, RESIZE_TO_CONTENTS)
+        header.setSectionResizeMode(COL_TYPE, RESIZE_TO_CONTENTS)
+        header.setSectionResizeMode(COL_SOURCE, RESIZE_STRETCH)
+        header.setSectionResizeMode(COL_FILLED, RESIZE_TO_CONTENTS)
+        header.setSectionResizeMode(COL_NOTE, RESIZE_TO_CONTENTS)
         layout.addWidget(self.table)
 
         self.extras_label = QLabel(
@@ -87,15 +89,15 @@ class MappingPanel(QWidget):
         self.extras_table.setHorizontalHeaderLabels(
             ["Bawa", "Kolom eksisting", "Nama di keluaran", "Terisi"])
         self.extras_table.verticalHeader().setVisible(False)
-        self.extras_table.setSelectionMode(QAbstractItemView.NoSelection)
+        self.extras_table.setSelectionMode(SELECT_NONE)
         self.extras_table.setAlternatingRowColors(True)
-        self.extras_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.extras_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.extras_table.setVerticalScrollBarPolicy(SCROLLBAR_OFF)
+        self.extras_table.setHorizontalScrollBarPolicy(SCROLLBAR_OFF)
         eh = self.extras_table.horizontalHeader()
-        eh.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        eh.setSectionResizeMode(1, QHeaderView.Stretch)
-        eh.setSectionResizeMode(2, QHeaderView.Stretch)
-        eh.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        eh.setSectionResizeMode(0, RESIZE_TO_CONTENTS)
+        eh.setSectionResizeMode(1, RESIZE_STRETCH)
+        eh.setSectionResizeMode(2, RESIZE_STRETCH)
+        eh.setSectionResizeMode(3, RESIZE_TO_CONTENTS)
         self.extras_table.cellChanged.connect(self._on_extra_renamed)
         layout.addWidget(self.extras_table)
 
@@ -257,20 +259,20 @@ class MappingPanel(QWidget):
 
             label = "%s  [%s]" % (name, self.state.source_type_name(name))
             item = QTableWidgetItem(label)
-            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            item.setFlags(item.flags() & ~ITEM_EDITABLE)
             self.extras_table.setItem(row, 1, item)
 
             output = QTableWidgetItem(checked.get(name, ""))
             if name in checked:
-                output.setFlags(output.flags() | Qt.ItemIsEditable)
+                output.setFlags(output.flags() | ITEM_EDITABLE)
             else:
-                output.setFlags(output.flags() & ~Qt.ItemIsEditable)
-            output.setData(Qt.UserRole, name)
+                output.setFlags(output.flags() & ~ITEM_EDITABLE)
+            output.setData(ROLE_USER, name)
             self.extras_table.setItem(row, 2, output)
 
             filled = self.state.fill_text(self.state.source_filled(name))
             cell = QTableWidgetItem(filled)
-            cell.setFlags(cell.flags() & ~Qt.ItemIsEditable)
+            cell.setFlags(cell.flags() & ~ITEM_EDITABLE)
             self.extras_table.setItem(row, 3, cell)
             self.extras_table.setRowHeight(row, ROW_HEIGHT)
 
@@ -303,7 +305,7 @@ class MappingPanel(QWidget):
         item = self.extras_table.item(row, column)
         if item is None:
             return
-        source = item.data(Qt.UserRole)
+        source = item.data(ROLE_USER)
         if not source:
             return
         if source in [e.source for e in self.state.extras]:

@@ -8,6 +8,7 @@ from qgis.PyQt.QtWidgets import (QApplication, QCheckBox, QFormLayout,
                                  QVBoxLayout, QWidget)
 from qgis.core import QgsSettings
 
+from ..compat import (BUTTON_NO, BUTTON_YES, CURSOR_WAIT)
 from .. import kugi_api
 
 
@@ -102,7 +103,7 @@ class SettingsTab(QWidget):
                summary["schemas"], "{:,}".format(summary["bytes"] // 1024)))
 
     def _on_update_catalog(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(CURSOR_WAIT)
         try:
             kugi_api.build_index()
         except kugi_api.KugiApiError as exc:
@@ -122,8 +123,8 @@ class SettingsTab(QWidget):
             self, "KUGI",
             "Buang seluruh simpanan katalog dan skema?\n\n"
             "Katalog perlu diunduh ulang setelah ini.",
-            QMessageBox.Yes | QMessageBox.No)
-        if answer != QMessageBox.Yes:
+            BUTTON_YES | BUTTON_NO)
+        if answer != BUTTON_YES:
             return
         removed = kugi_api.clear_cache()
         self._refresh_catalog_info()
@@ -133,7 +134,7 @@ class SettingsTab(QWidget):
 
     def _on_test(self):
         kugi_api.set_base_url(self.url_edit.text().strip())
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(CURSOR_WAIT)
         try:
             ok, message = kugi_api.test_connection()
         finally:
