@@ -8,7 +8,7 @@ author=Seto Baruno, Azkal Azkiya, Farda Fadila, Nando Yudanto Aji
 email=
 
 tracker=
-repository=
+repository= https://github.com/lepo-uno/geolepo/tree/main/KUGI
 
 hasProcessingProvider=no
 tags=kugi,big,indonesia,standardisasi,atribut,shapefile,geopackage
