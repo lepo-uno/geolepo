@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""KUGI Converter - plugin QGIS untuk standardisasi atribut sesuai KUGI.
+"""KUGI - plugin QGIS untuk standardisasi atribut sesuai KUGI.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -7,10 +7,37 @@ Semua penggunaan QVariant dikurung di sini supaya migrasi ke QGIS 4 / Qt6
 Target minimum: QGIS 3.28 LTR, Python 3.9.
 """
 
-from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import (QAbstractItemView, QComboBox,
+                                 QHeaderView, QMessageBox)
 from qgis.core import Qgis, QgsMessageLog
 
-PLUGIN_NAME = "KUGI Converter"
+# QGIS 4 membuang QVariant untuk tipe field dan memakai QMetaType. QGIS 3.38
+# sudah menerima keduanya, di bawah itu hanya QVariant. Resolusinya dilakukan
+# sekali di sini, dan seluruh berkas lain memakai konstanta TYPE_* saja.
+try:
+    from qgis.PyQt.QtCore import QMetaType
+    _META = QMetaType.Type
+    TYPE_STRING = _META.QString
+    TYPE_INT = _META.Int
+    TYPE_LONGLONG = _META.LongLong
+    TYPE_DOUBLE = _META.Double
+    TYPE_DATE = _META.QDate
+    TYPE_DATETIME = _META.QDateTime
+    TYPE_BOOL = _META.Bool
+    USING_QMETATYPE = True
+except (ImportError, AttributeError):
+    from qgis.PyQt.QtCore import QVariant
+    TYPE_STRING = QVariant.String
+    TYPE_INT = QVariant.Int
+    TYPE_LONGLONG = QVariant.LongLong
+    TYPE_DOUBLE = QVariant.Double
+    TYPE_DATE = QVariant.Date
+    TYPE_DATETIME = QVariant.DateTime
+    TYPE_BOOL = QVariant.Bool
+    USING_QMETATYPE = False
+
+PLUGIN_NAME = "KUGI"
 
 QGIS_VERSION = Qgis.QGIS_VERSION_INT
 
@@ -27,16 +54,16 @@ def log_warning(message):
 # Sumber verifikasi: dump featuretypegetbycode?code=CA02040160 (97 baris,
 # 34 atribut) yang memuat Integer, String, Double, OID, Date, dan Geometry.
 _TYPE_MAP = {
-    "String": QVariant.String,
-    "Integer": QVariant.Int,
-    "Int64": QVariant.LongLong,
-    "Double": QVariant.Double,
-    "Date": QVariant.Date,
-    "DateTime": QVariant.DateTime,
-    "Boolean": QVariant.Bool,
+    "String": TYPE_STRING,
+    "Integer": TYPE_INT,
+    "Int64": TYPE_LONGLONG,
+    "Double": TYPE_DOUBLE,
+    "Date": TYPE_DATE,
+    "DateTime": TYPE_DATETIME,
+    "Boolean": TYPE_BOOL,
     # OBJECTID dikelola ArcGIS. Di sini diperlakukan sebagai Integer biasa
     # dan diisi nomor urut bila tidak dipetakan dari kolom eksisting.
-    "OID": QVariant.Int,
+    "OID": TYPE_INT,
 }
 
 from .kugi_model import NON_ATTRIBUTE_TYPES  # noqa: F401
@@ -67,32 +94,32 @@ def qvariant_for(value_type):
     log_warning(
         "faValueType tidak dikenal: '%s'. Dibuat sebagai String." % value_type
     )
-    return QVariant.String
+    return TYPE_STRING
 
 
 def length_precision_for(qvariant_type, requested_length=None):
     """Kembalikan pasangan (length, precision) untuk QgsField."""
-    if qvariant_type == QVariant.String:
+    if qvariant_type == TYPE_STRING:
         length = requested_length or DEFAULT_STRING_LENGTH
         return min(int(length), DBF_MAX_STRING), 0
-    if qvariant_type == QVariant.Double:
+    if qvariant_type == TYPE_DOUBLE:
         return DEFAULT_DOUBLE_LENGTH, DEFAULT_DOUBLE_PRECISION
-    if qvariant_type == QVariant.LongLong:
+    if qvariant_type == TYPE_LONGLONG:
         return DEFAULT_INT64_LENGTH, 0
-    if qvariant_type == QVariant.Int:
+    if qvariant_type == TYPE_INT:
         return DEFAULT_INT_LENGTH, 0
     return 0, 0
 
 
 def type_display_name(qvariant_type):
     names = {
-        QVariant.String: "String",
-        QVariant.Int: "Integer",
-        QVariant.LongLong: "Int64",
-        QVariant.Double: "Double",
-        QVariant.Date: "Date",
-        QVariant.DateTime: "DateTime",
-        QVariant.Bool: "Boolean",
+        TYPE_STRING: "String",
+        TYPE_INT: "Integer",
+        TYPE_LONGLONG: "Int64",
+        TYPE_DOUBLE: "Double",
+        TYPE_DATE: "Date",
+        TYPE_DATETIME: "DateTime",
+        TYPE_BOOL: "Boolean",
     }
     return names.get(qvariant_type, "Tidak diketahui")
 
@@ -101,10 +128,74 @@ def types_compatible(source_type, target_type):
     """Apakah nilai bertipe source aman dimasukkan ke field bertipe target."""
     if source_type == target_type:
         return True
-    numeric = {QVariant.Int, QVariant.LongLong, QVariant.Double}
+    numeric = {TYPE_INT, TYPE_LONGLONG, TYPE_DOUBLE}
     if source_type in numeric and target_type in numeric:
         return True
     # Apa pun bisa diubah menjadi teks.
-    if target_type == QVariant.String:
+    if target_type == TYPE_STRING:
         return True
     return False
+
+# --------------------------------------------------------------------------
+# Kompatibilitas Qt5 dan Qt6
+#
+# QGIS 4 memakai PyQt6, yang menghapus akses enum tanpa cakupan. Qt.UserRole
+# tidak lagi ada, yang ada Qt.ItemDataRole.UserRole. PyQt5 sebenarnya sudah
+# menyediakan bentuk bercakupan itu, tapi tidak untuk semua versi, jadi
+# resolusinya dilakukan saat jalan dengan jatuh balik ke bentuk lama.
+#
+# Semua konstanta dikumpulkan di sini, bukan disebar di seluruh berkas,
+# supaya perubahan Qt berikutnya cukup menyentuh satu tempat.
+# --------------------------------------------------------------------------
+
+
+def enum_of(owner, group, name):
+    """Ambil anggota enum, dari bentuk bercakupan maupun bentuk lama."""
+    scoped = getattr(owner, group, None)
+    if scoped is not None and hasattr(scoped, name):
+        return getattr(scoped, name)
+    return getattr(owner, name)
+
+
+ROLE_USER = enum_of(Qt, "ItemDataRole", "UserRole")
+CURSOR_WAIT = enum_of(Qt, "CursorShape", "WaitCursor")
+SCROLLBAR_OFF = enum_of(Qt, "ScrollBarPolicy", "ScrollBarAlwaysOff")
+ITEM_EDITABLE = enum_of(Qt, "ItemFlag", "ItemIsEditable")
+ITEM_NO_FLAGS = enum_of(Qt, "ItemFlag", "NoItemFlags")
+DATE_ISO = enum_of(Qt, "DateFormat", "ISODate")
+
+RESIZE_TO_CONTENTS = enum_of(QHeaderView, "ResizeMode", "ResizeToContents")
+RESIZE_STRETCH = enum_of(QHeaderView, "ResizeMode", "Stretch")
+RESIZE_FIXED = enum_of(QHeaderView, "ResizeMode", "Fixed")
+
+SELECT_SINGLE = enum_of(QAbstractItemView, "SelectionMode", "SingleSelection")
+SELECT_NONE = enum_of(QAbstractItemView, "SelectionMode", "NoSelection")
+SELECT_ROWS = enum_of(QAbstractItemView, "SelectionBehavior", "SelectRows")
+NO_EDIT_TRIGGERS = enum_of(QAbstractItemView, "EditTrigger", "NoEditTriggers")
+
+BUTTON_YES = enum_of(QMessageBox, "StandardButton", "Yes")
+BUTTON_NO = enum_of(QMessageBox, "StandardButton", "No")
+ROLE_ACCEPT = enum_of(QMessageBox, "ButtonRole", "AcceptRole")
+ROLE_ACTION = enum_of(QMessageBox, "ButtonRole", "ActionRole")
+ROLE_REJECT = enum_of(QMessageBox, "ButtonRole", "RejectRole")
+
+COMBO_NO_INSERT = enum_of(QComboBox, "InsertPolicy", "NoInsert")
+
+
+def vector_layer_filter():
+    """Penyaring layer vektor.
+
+    QgsMapLayerProxyModel.VectorLayer diganti Qgis.LayerFilter.VectorLayer
+    sejak QGIS 3.34 dan dibuang di QGIS 4.
+    """
+    layer_filter = getattr(Qgis, "LayerFilter", None)
+    if layer_filter is not None and hasattr(layer_filter, "VectorLayer"):
+        return layer_filter.VectorLayer
+    from qgis.core import QgsMapLayerProxyModel
+    return QgsMapLayerProxyModel.VectorLayer
+
+
+def show_modal(dialog):
+    """Jalankan dialog secara modal. PyQt6 membuang exec_()."""
+    runner = getattr(dialog, "exec", None) or getattr(dialog, "exec_")
+    return runner()

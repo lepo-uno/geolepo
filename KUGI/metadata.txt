@@ -1,19 +1,19 @@
 [general]
 name=KUGI
 qgisMinimumVersion=3.28
-qgisMinimumVersion=3.99
-description=Plugin untuk standardisari data geospasial sesuai katalog unsur Geografi Indonesia (KUGI). 
-about=Fitur plugin: Plugin mengambil skema unsur langsung dari WebAPI KUGI (Badan Informasi Geospasial)Pengaturan kolom/atribut tabel sesuai standar KUGI. Ekspor menjadi data spasial baru dalam format Shapefile dan/atau GeoPackage.
+qgisMaximumVersion=4.99
+description=Plugin untuk standardisasi data geospasial sesuai katalog unsur Geografi Indonesia (KUGI). 
+about=Fitur plugin: Plugin mengambil skema unsur langsung dari WebAPI KUGI (Badan Informasi Geospasial). Pengaturan kolom/atribut tabel sesuai standar KUGI. Ekspor menjadi data spasial baru dalam format Shapefile dan/atau GeoPackage.
 version=1.0.0
 author=Seto Baruno, Azkal Azkiya, Farda Fadila, Nando Yudanto Aji
 email=
 
-tracker=
-repository= https://github.com/lepo-uno/geolepo/tree/main/KUGI
+tracker=https://github.com/lepo-uno/geolepo/tree/main/KUGI
+repository=https://github.com/lepo-uno/geolepo/tree/main/KUGI
 
 hasProcessingProvider=no
 tags=kugi,big,indonesia,standardisasi,atribut,shapefile,geopackage
-homepage=
+homepage=https://github.com/lepo-uno/geolepo/tree/main/KUGI
 category=Vector
 icon=icon.png
 experimental=False

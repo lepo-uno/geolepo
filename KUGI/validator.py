@@ -9,10 +9,8 @@ atau berkas dari disk.
 
 from typing import List
 
-from qgis.PyQt.QtCore import QVariant
-from qgis.core import QgsWkbTypes
 
-from .compat import (DBF_MAX_FIELD_NAME, DBF_MAX_STRING, qvariant_for,
+from .compat import (TYPE_STRING, DBF_MAX_FIELD_NAME, DBF_MAX_STRING, qvariant_for,
                      types_compatible, type_display_name)
 from .kugi_model import (VALUE_REQUIRED_FIELDS, QGIS_GEOMETRY_TO_TOKEN,
                          GEOMETRY_LABEL, normalize_code, strip_en)
@@ -169,7 +167,7 @@ def _check_values(layer, schema, expected, present) -> List[Issue]:
 
     domain_atts = [a for a in present_kugi if a.has_domain and a.name in idx]
     string_atts = [a for a in present_kugi
-                   if a.name in idx and present[a.name].type() == QVariant.String]
+                   if a.name in idx and present[a.name].type() == TYPE_STRING]
 
     domain_sets = {a.name: a.normalized_domain_values() for a in domain_atts}
     length_limits = {}

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Model status pemetaan.
 
+Ini satu-satunya sumber kebenaran pemetaan. Panel dual list hanyalah view
+di atas struktur ini, sehingga mengganti bentuk antarmuka tidak menyentuh
+builder maupun validator.
 
     mapping : dict[str, FieldSource]   field KUGI, kunci tetap
     extras  : list[ExtraField]         kolom di luar skema, berurutan

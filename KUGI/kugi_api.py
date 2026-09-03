@@ -27,7 +27,7 @@ CACHE_TTL_SECONDS = 7 * 24 * 3600
 # Endpoint featuretype menolak klien tanpa header browser dan membalas 500.
 # Header ini wajib dipasang manual, QgsBlockingNetworkRequest tidak
 # mengirimkannya secara default.
-USER_AGENT = "QGIS KUGI Converter/1.0 (+https://qgis.org)"
+USER_AGENT = "QGIS KUGI/1.0 (+https://qgis.org)"
 
 
 class KugiApiError(Exception):

@@ -10,16 +10,17 @@ import json
 import os
 from typing import List, Optional
 
-from qgis.PyQt.QtCore import QDate, QDateTime, Qt, QVariant
+from qgis.PyQt.QtCore import QDate, QDateTime
 from qgis.core import (QgsFeature, QgsField, QgsFields, QgsGeometry,
                        QgsProject,
                        QgsVectorLayer, QgsVectorFileWriter, QgsWkbTypes,
                        QgsEditorWidgetSetup, QgsMapLayer)
 
-from .compat import (DBF_MAX_FIELD_NAME, DBF_MAX_STRING, log, log_warning,
+from .compat import (TYPE_BOOL, TYPE_DATE, TYPE_DATETIME,
+                     TYPE_DOUBLE, TYPE_INT, TYPE_LONGLONG, TYPE_STRING,
+                     DATE_ISO, DBF_MAX_FIELD_NAME, DBF_MAX_STRING, log, log_warning,
                      length_precision_for, qvariant_for)
-from .mapping import (MODE_CONSTANT, MODE_CRS, MODE_EMPTY, MODE_SEQUENCE,
-                      MODE_SOURCE)
+from .mapping import MODE_CONSTANT, MODE_CRS, MODE_SEQUENCE, MODE_SOURCE
 
 OVERRIDES_PATH = os.path.join(os.path.dirname(__file__), "resources",
                               "field_length_overrides.json")
@@ -66,7 +67,7 @@ def build_fields(state) -> QgsFields:
         if state.mapping[att.name].mode == MODE_SOURCE:
             src_idx = state.source_fields.indexFromName(
                 state.mapping[att.name].source)
-            if src_idx >= 0 and qtype == QVariant.String:
+            if src_idx >= 0 and qtype == TYPE_STRING:
                 src_len = state.source_fields.at(src_idx).length()
                 if src_len and src_len > 0:
                     requested = max(requested or 0, src_len)
@@ -88,7 +89,7 @@ def build_fields(state) -> QgsFields:
         field = QgsField(extra.output, original.type())
         field.setLength(original.length())
         field.setPrecision(original.precision())
-        if field.type() == QVariant.String and field.length() > DBF_MAX_STRING:
+        if field.type() == TYPE_STRING and field.length() > DBF_MAX_STRING:
             field.setLength(DBF_MAX_STRING)
         fields.append(field)
 
@@ -131,7 +132,7 @@ def _to_date(value, want_datetime=False):
         return QDateTime(value) if want_datetime else value
 
     text = str(value).strip()
-    iso = QDateTime.fromString(text, Qt.ISODate)
+    iso = QDateTime.fromString(text, DATE_ISO)
     if iso.isValid():
         return iso if want_datetime else iso.date()
 
@@ -210,36 +211,36 @@ def _coerce(value, qtype):
         pass
 
     if isinstance(value, (QDate, QDateTime)):
-        if qtype == QVariant.Date:
+        if qtype == TYPE_DATE:
             return _to_date(value), True
-        if qtype == QVariant.DateTime:
+        if qtype == TYPE_DATETIME:
             return _to_date(value, want_datetime=True), True
-        if qtype == QVariant.String:
-            return value.toString(Qt.ISODate), True
+        if qtype == TYPE_STRING:
+            return value.toString(DATE_ISO), True
 
     text = str(value).strip()
     if text.lower() in NULL_TEXTS:
         return None, True
 
     try:
-        if qtype == QVariant.String:
+        if qtype == TYPE_STRING:
             return text, True
-        if qtype in (QVariant.Int, QVariant.LongLong):
+        if qtype in (TYPE_INT, TYPE_LONGLONG):
             number, _ = _parse_number(text)
             if number is None:
                 return None, False
             # Pembulatan ke bilangan bulat membuang bagian pecahan, dan itu
             # kehilangan data yang harus terlihat, bukan diam-diam terjadi.
             return int(number), number == int(number)
-        if qtype == QVariant.Double:
+        if qtype == TYPE_DOUBLE:
             number, _ = _parse_number(text)
             if number is None:
                 return None, False
             return number, True
-        if qtype in (QVariant.Date, QVariant.DateTime):
-            parsed = _to_date(text, want_datetime=(qtype == QVariant.DateTime))
+        if qtype in (TYPE_DATE, TYPE_DATETIME):
+            parsed = _to_date(text, want_datetime=(qtype == TYPE_DATETIME))
             return (parsed, True) if parsed is not None else (None, False)
-        if qtype == QVariant.Bool:
+        if qtype == TYPE_BOOL:
             if text.lower() in ("1", "true", "ya", "yes", "y"):
                 return True, True
             if text.lower() in ("0", "false", "tidak", "no", "n"):
@@ -439,7 +440,7 @@ def build_memory_layer(state, source_layer, feedback=None) -> BuildResult:
             elif spec.mode == MODE_SOURCE:
                 raw = src_feature.attribute(spec.source)
                 value, ok = _coerce(raw, qtype)
-                if qtype == QVariant.String and value is not None:
+                if qtype == TYPE_STRING and value is not None:
                     limit = out_fields.at(idx).length()
                     if limit and len(value) > limit:
                         value = value[:limit]
