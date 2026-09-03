@@ -17,6 +17,7 @@ from qgis.PyQt.QtWidgets import (QDialog, QFrame, QHBoxLayout,
                                  QPushButton, QScrollArea,
                                  QTabWidget, QVBoxLayout)
 
+from ..compat import FRAME_NO_FRAME
 from .settings_tab import SettingsTab
 from .standardize_tab import StandardizeTab
 
@@ -32,7 +33,7 @@ def scrollable(widget):
     """Bungkus widget dalam area gulir yang ikut melebar."""
     area = QScrollArea()
     area.setWidgetResizable(True)
-    area.setFrameShape(QFrame.NoFrame)
+    area.setFrameShape(FRAME_NO_FRAME)
     area.setWidget(widget)
     return area
 
