@@ -1,0 +1,33 @@
+{
+  "_comment": "Panjang field per nama. API KUGI tidak menyediakan panjang field sama sekali (tidak satu pun dari 36 kunci respons featuretypegetbycode memuatnya). Nilai di sini diturunkan dari Buku 2 KUGI dan pedoman BIG. Field yang tidak tercantum memakai default 254. Alasan tidak memakai 254 untuk semua: DBF berformat fixed-width, sehingga field String(254) memakan 254 byte per record apa pun isinya. Untuk data desa nasional sekitar 83.000 poligon dengan 30 field, selisihnya sekitar 630 MB versus 150 MB.",
+
+  "FCODE": 50,
+  "LCODE": 50,
+  "METADATA": 50,
+  "SRS_ID": 50,
+  "NAMOBJ": 250,
+  "REMARK": 250,
+  "KLLRJL": 250,
+
+  "KDBBPS": 50,
+  "KDCBPS": 50,
+  "KDCPUM": 50,
+  "KDEBPS": 50,
+  "KDEPUM": 50,
+  "KDPBPS": 50,
+  "KDPKAB": 50,
+  "KDPPUM": 50,
+
+  "WADMKC": 50,
+  "WADMKD": 50,
+  "WADMKK": 50,
+  "WADMPR": 50,
+  "WIADKC": 50,
+  "WIADKD": 50,
+  "WIADKK": 50,
+  "WIADPR": 50,
+
+  "LKONOF": 50,
+  "LKSBSP": 50,
+  "LKSRTA": 50
+}
